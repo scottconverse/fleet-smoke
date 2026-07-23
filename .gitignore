@@ -1,0 +1,6 @@
+fleet-manifest.json
+.last-run
+__pycache__/
+*.pyc
+.rigor/
+.pytest_cache/
