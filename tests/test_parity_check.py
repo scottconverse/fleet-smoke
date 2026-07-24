@@ -171,6 +171,17 @@ class TestSanctionedSubstitutions:
             [f1, f2], collapse_ws=True)
         assert r_loose["status"] == "PASS"
 
+    def test_substitution_spanning_a_line_wrap_still_matches(self, tmp_path):
+        # sanctioned phrases are written single-spaced in the map; they must
+        # match even when the source file wraps them across lines
+        f1 = w(tmp_path, "full.md", FULL_VARIANT)
+        wrapped = LITE_VARIANT.replace("host-agnostic wording",
+                                       "host-agnostic\nwording")
+        f2 = w(tmp_path, "lite.md", wrapped)
+        (r,) = parity_check.compare_shared_blocks(
+            [f1, f2], substitutions=self.SUBS, collapse_ws=True)
+        assert r["status"] == "PASS", r["detail"]
+
     def test_cli_substitutions_file(self, tmp_path):
         f1 = w(tmp_path, "full.md", FULL_VARIANT)
         f2 = w(tmp_path, "lite.md", LITE_VARIANT)

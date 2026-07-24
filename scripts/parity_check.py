@@ -50,12 +50,14 @@ def extract_blocks(text):
 
 
 def _canonical(body, substitutions=None, collapse_ws=False):
-    """Apply sanctioned substitutions, then optionally collapse all whitespace
-    runs to single spaces (kills wrapping differences)."""
-    for sub in substitutions or []:
-        body = body.replace(sub["from"], sub["to"])
+    """Optionally collapse whitespace runs to single spaces (kills wrapping
+    differences), THEN apply sanctioned substitutions — collapse must come
+    first so a mapped phrase matches even when the source wraps it across
+    lines; map entries are therefore written single-spaced."""
     if collapse_ws:
         body = " ".join(body.split())
+    for sub in substitutions or []:
+        body = body.replace(sub["from"], sub["to"])
     return body
 
 
