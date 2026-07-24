@@ -49,10 +49,22 @@ def extract_blocks(text):
     return blocks
 
 
-def compare_shared_blocks(files):
+def _canonical(body, substitutions=None, collapse_ws=False):
+    """Apply sanctioned substitutions, then optionally collapse all whitespace
+    runs to single spaces (kills wrapping differences)."""
+    for sub in substitutions or []:
+        body = body.replace(sub["from"], sub["to"])
+    if collapse_ws:
+        body = " ".join(body.split())
+    return body
+
+
+def compare_shared_blocks(files, substitutions=None, collapse_ws=False):
     """Compare marked blocks across files. One result row per block id seen anywhere.
 
-    Zero blocks anywhere is a FAIL, never a vacuous pass.
+    Zero blocks anywhere is a FAIL, never a vacuous pass. `substitutions` is a
+    list of {"from", "to"} sanctioned rewrites (the ONLY blessed differences
+    between copies); `collapse_ws` tolerates different line wrapping.
     """
     per_file = {}
     for f in files:
@@ -75,7 +87,8 @@ def compare_shared_blocks(files):
             results.append({"block": bid, "status": "FAIL",
                             "detail": f"missing in: {', '.join(missing)}"})
             continue
-        bodies = {f: blocks[bid] for f, blocks in per_file.items()}
+        bodies = {f: _canonical(blocks[bid], substitutions, collapse_ws)
+                  for f, blocks in per_file.items()}
         canonical = next(iter(bodies.values()))
         drifted = [f.name for f, body in bodies.items() if body != canonical]
         if drifted and len(set(bodies.values())) > 1:
@@ -111,14 +124,23 @@ def compare_identical(files):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--mode", choices=["shared-blocks", "identical"], required=True)
+    ap.add_argument("--substitutions", metavar="JSON_FILE",
+                    help="sanctioned {from,to} rewrites (shared-blocks mode)")
+    ap.add_argument("--collapse-ws", action="store_true",
+                    help="tolerate line-wrapping differences (shared-blocks mode)")
     ap.add_argument("files", nargs="+")
     args = ap.parse_args(argv)
     if len(args.files) < 2:
         print("need at least two files", file=sys.stderr)
         return 2
+    substitutions = None
+    if args.substitutions:
+        substitutions = json.loads(
+            Path(args.substitutions).read_text(encoding="utf-8-sig"))
     try:
         if args.mode == "shared-blocks":
-            results = compare_shared_blocks(args.files)
+            results = compare_shared_blocks(args.files, substitutions=substitutions,
+                                            collapse_ws=args.collapse_ws)
         else:
             results = [compare_identical(args.files)]
     except MarkerError as e:

@@ -128,6 +128,61 @@ class TestIdenticalMode:
         assert "ghost.md" in r["detail"]
 
 
+LITE_VARIANT = """<!-- SHARED-BLOCK: rule-1 -->
+the rule
+line one host-agnostic wording
+<!-- /SHARED-BLOCK: rule-1 -->
+"""
+
+FULL_VARIANT = """<!-- SHARED-BLOCK: rule-1 -->
+the rule line one
+plugin-specific wording
+<!-- /SHARED-BLOCK: rule-1 -->
+"""
+
+
+class TestSanctionedSubstitutions:
+    SUBS = [{"from": "host-agnostic wording", "to": "plugin-specific wording"}]
+
+    def test_sanctioned_difference_passes(self, tmp_path):
+        # different wrapping AND a mapped wording difference -> PASS
+        f1 = w(tmp_path, "full.md", FULL_VARIANT)
+        f2 = w(tmp_path, "lite.md", LITE_VARIANT)
+        (r,) = parity_check.compare_shared_blocks(
+            [f1, f2], substitutions=self.SUBS, collapse_ws=True)
+        assert r["status"] == "PASS", r["detail"]
+
+    def test_unsanctioned_drift_still_fails(self, tmp_path):
+        f1 = w(tmp_path, "full.md", FULL_VARIANT)
+        f2 = w(tmp_path, "lite.md",
+               LITE_VARIANT.replace("the rule", "the CHANGED rule"))
+        (r,) = parity_check.compare_shared_blocks(
+            [f1, f2], substitutions=self.SUBS, collapse_ws=True)
+        assert r["status"] == "FAIL"
+
+    def test_wrapping_only_difference_needs_collapse_ws(self, tmp_path):
+        # without collapse_ws, different wrapping is a real difference
+        f1 = w(tmp_path, "full.md", FULL_VARIANT)
+        f2 = w(tmp_path, "lite.md",
+               LITE_VARIANT.replace("host-agnostic", "plugin-specific"))
+        (r_strict,) = parity_check.compare_shared_blocks([f1, f2])
+        assert r_strict["status"] == "FAIL"
+        (r_loose,) = parity_check.compare_shared_blocks(
+            [f1, f2], collapse_ws=True)
+        assert r_loose["status"] == "PASS"
+
+    def test_cli_substitutions_file(self, tmp_path):
+        f1 = w(tmp_path, "full.md", FULL_VARIANT)
+        f2 = w(tmp_path, "lite.md", LITE_VARIANT)
+        subs = tmp_path / "subs.json"
+        subs.write_text(json.dumps(self.SUBS), encoding="utf-8")
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPT), "--mode", "shared-blocks",
+             "--substitutions", str(subs), "--collapse-ws", str(f1), str(f2)],
+            capture_output=True, text=True)
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
 class TestCli:
     def test_cli_json_output_and_exit_codes(self, tmp_path):
         f1 = w(tmp_path, "a.md", BLOCK_A)
