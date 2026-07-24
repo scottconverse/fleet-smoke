@@ -1,0 +1,45 @@
+{
+  "hook_sources": [
+    "C:/Users/<you>/.claude/settings.json",
+    "C:/Users/<you>/.claude/skills/<plugin>/hooks/hooks.json"
+  ],
+  "fireable_hooks": [
+    {
+      "name": "deterministic-detector ruff hook",
+      "recipe": "write scratch .py with a deliberate ruff violation via Write tool, confirm hook stderr feedback arrives, delete scratch"
+    }
+  ],
+  "expected_mcp_servers": [
+    "plugin:deterministic-detector:code-graph"
+  ],
+  "skills_dirs": [
+    "C:/Users/<you>/.claude/skills"
+  ],
+  "parity_sets": [
+    {
+      "id": "example-live-skill-vs-repo",
+      "mode": "identical",
+      "files": [
+        "C:/Users/<you>/.claude/skills/<skill>/SKILL.md",
+        "C:/Users/<you>/path/to/repo/skills/<skill>/SKILL.md"
+      ]
+    },
+    {
+      "id": "example-shared-rule",
+      "mode": "shared-blocks",
+      "files": [
+        "C:/copy1.md",
+        "C:/copy2.md",
+        "C:/copy3.md"
+      ]
+    }
+  ],
+  "pins": [
+    {
+      "package": "code-review-graph",
+      "pinned": "2.3.7",
+      "issue": "tirth8205/code-review-graph#720"
+    }
+  ],
+  "stamp_file": "C:/Users/<you>/.claude/skills/fleet-smoke/.last-run"
+}
