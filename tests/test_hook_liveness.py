@@ -84,6 +84,34 @@ class TestCheckHookSource:
         assert r["status"] == "PASS"
         assert r["event"] == "PostToolUse"
 
+    def test_claude_plugin_root_placeholder_expands_to_plugin_root(self, tmp_path):
+        # ${CLAUDE_PLUGIN_ROOT} in a plugin's hooks.json means the plugin root
+        # (the hooks.json's parent's parent); it must not be reported missing.
+        plugin = tmp_path / "myplugin"
+        hookdir = plugin / "hooks"
+        hookdir.mkdir(parents=True)
+        (hookdir / "ruff_feedback.py").write_text("pass\n")
+        src = hookdir / "hooks.json"
+        src.write_text(json.dumps({
+            "PostToolUse": [{"hooks": [{
+                "type": "command",
+                "command": 'python "${CLAUDE_PLUGIN_ROOT}/hooks/ruff_feedback.py"'}]}],
+        }), encoding="utf-8")
+        (r,) = hook_liveness.check_hook_source(src)
+        assert r["status"] == "PASS", r["detail"]
+
+    def test_plugin_root_placeholder_with_script_actually_missing_fails(self, tmp_path):
+        hookdir = tmp_path / "myplugin" / "hooks"
+        hookdir.mkdir(parents=True)
+        src = hookdir / "hooks.json"
+        src.write_text(json.dumps({
+            "PostToolUse": [{"hooks": [{
+                "type": "command",
+                "command": 'python "${CLAUDE_PLUGIN_ROOT}/hooks/ghost.py"'}]}],
+        }), encoding="utf-8")
+        (r,) = hook_liveness.check_hook_source(src)
+        assert r["status"] == "FAIL"
+
     def test_command_with_no_path_is_partial(self, tmp_path):
         src = write_settings(tmp_path, {
             "Stop": [{"hooks": [{"type": "command", "command": "echo done"}]}],

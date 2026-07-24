@@ -69,9 +69,15 @@ def check_hook_source(source):
         return [{"source": str(source), "event": "-", "status": "FAIL",
                  "detail": f"unparseable JSON: {e}"}]
 
+    # ${CLAUDE_PLUGIN_ROOT} in a plugin's hooks.json = the plugin root; a
+    # plugin hooks file lives at <plugin>/hooks/hooks.json.
+    plugin_root = str(source.parent.parent)
+
     results = []
     for event, command in _iter_hook_commands(data):
         script = extract_script_path(command)
+        if script and "${CLAUDE_PLUGIN_ROOT}" in script:
+            script = script.replace("${CLAUDE_PLUGIN_ROOT}", plugin_root)
         row = {"source": source.name, "event": event, "command": command}
         if script is None:
             row.update(status="PARTIAL",
