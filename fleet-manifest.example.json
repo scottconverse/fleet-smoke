@@ -27,6 +27,8 @@
     {
       "id": "example-shared-rule",
       "mode": "shared-blocks",
+      "collapse_ws": true,
+      "substitutions": "C:/path/to/parity-substitutions.json",
       "files": [
         "C:/copy1.md",
         "C:/copy2.md",
