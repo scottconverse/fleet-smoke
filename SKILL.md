@@ -56,7 +56,11 @@ machine's inventory lives in `fleet-manifest.json` beside this file
    `python3 scripts/parity_check.py --mode <mode> <files...>`
    `identical` = whole-file (live skill vs repo copy); `shared-blocks` =
    marked SHARED-BLOCK regions across N copies. Zero markers found is a
-   FAIL, never a vacuous pass.
+   FAIL, never a vacuous pass. If the entry carries `substitutions` (path to
+   a sanctioned-rewrites JSON) pass `--substitutions <path>`, and pass
+   `--collapse-ws` when it sets `collapse_ws` — host-adapted copies compare
+   through the map; drift outside it still fails. A git-pull of the repos
+   named in the set precedes the check (stale clones prove nothing).
 
 6. **Pin watch (report-only).**
    `python3 scripts/pin_watch.py fleet-manifest.json`
