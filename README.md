@@ -1,3 +1,5 @@
+> **Archived October 17, 2026.** `hook_liveness.py` now lives in [claude-hook-kit](https://github.com/scottconverse/claude-hook-kit) as `doctor.mjs` (`node doctor.mjs [--project <dir>] [--json]`), extended with the kit's own registration and project-config checks and covered by `tests/doctor.test.mjs`. `parity_check.py` was not ported; the kit's per-hook parity tests in `tests/` answer the same question for the kit's hooks. Both originals remain readable here. This repository is read-only; history and issues are preserved.
+
 # fleet-smoke
 
 A two-minute health check for a Claude Code tool fleet — hooks, plugins, MCP
